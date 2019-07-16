@@ -16,7 +16,7 @@ public class Application {
 
     @Bean
     public PromptProvider myPromptProvider() {
-        return () -> new AttributedString("Please for parsing csv write paths: csv file path, output json file path :>",
+        return () -> new AttributedString("Please for parsing csv write command (parse or parse-zip) and paths: csv file (or zip file) path, output json file path :>",
                 AttributedStyle.DEFAULT.foreground(AttributedStyle.RED));
     }
 }

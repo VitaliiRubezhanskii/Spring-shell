@@ -1,3 +1,10 @@
 1563200055383:test.csv
 1563200075929:test.csv test.json
 1563200099199:parse test.csv test.json
+1563275726600:parse /home/user/IdeaProjects/homoloa/src/test/resources/test-csv/test.csv /home/user/IdeaProjects/homoloa/src/test/resources/test-csv/test.json
+1563276373140:parse /home/user/Downloads/udemy.com - Docker and Kubernetes. The Complete Guide [2018-09]/07 Continuous Integration and Deployment with AWS/test.csv /home/user/Downloads/udemy.com - Docker and Kubernetes. The Complete Guide [2018-09]/07 Continuous Integration and Deployment with AWS/test.json
+1563276498127:parse /home/user/Downloads/test.csv /home/user/Downloads/test.json
+1563283065754:parse /home/user/IdeaProjects/homoloa/src/test/resources/test-csv/test.csv /home/user/IdeaProjects/homoloa/src/test/resources/test-csv/test.json
+1563283176889:parse-zip /home/user/snap/skype/common/testJD.zip /home/user/snap/skype/common/test.json
+1563283484403:3
+1563283527611:parse-zip /home/user/snap/skype/common/testJD.zip /home/user/snap/skype/common/test.json
