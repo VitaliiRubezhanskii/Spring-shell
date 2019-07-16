@@ -4,14 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homoloa.domain.PaerseEntity;
 import com.homoloa.dto.JsonWrapperDto;
 import com.homoloa.service.ParseService;
-import com.opencsv.CSVReader;
-import com.sun.xml.internal.messaging.saaj.util.ByteInputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -27,21 +24,16 @@ public class ShellCommands {
     @Autowired
     private ParseService parseService;
 
-
     @ShellMethod(value = "Parse csv file to Jsone.", group = "Parsing csv")
     public String parse(String pathCsvFile, String pathOutputJsonFile) {
-
         File fileForParse = new File(pathCsvFile);
         if (fileForParse.exists()) {
             try (BufferedReader csvReader = new BufferedReader(new FileReader(pathCsvFile))) {
-
                 ObjectMapper mapper = new ObjectMapper();
                 String json = mapper.writeValueAsString(new JsonWrapperDto(parseService.parseCsvFile(csvReader)));
-
                 if (json != null) {
                     try (FileWriter fw = new FileWriter(pathOutputJsonFile);
                          BufferedWriter bw = new BufferedWriter(fw)) {
-
                         bw.write(json);
                         return "Json file has been successfully saved";
                     }
@@ -74,23 +66,19 @@ public class ShellCommands {
                     ex.printStackTrace();
                 }
             }
-
             String json = null;
             if (CollectionUtils.isNotEmpty(paerseEntities)) {
                 ObjectMapper mapper = new ObjectMapper();
                 json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
             }
-
             if (json != null) {
                 try (FileWriter fw = new FileWriter(pathOutputJsonFile);
                      BufferedWriter bw = new BufferedWriter(fw)) {
-
                     bw.write(json);
                     return "Json file has been successfully saved";
                 }
             }
-
-        } catch (IOException ex) {
+        }catch (IOException ex) {
             log.error(" Zip File for parse by path: " + pathCsvFile + " hasn't been handled");
         }
         return "Json file hasn't been saved";
