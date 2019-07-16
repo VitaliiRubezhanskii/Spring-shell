@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 @ShellComponent
@@ -46,7 +47,7 @@ public class ShellCommands {
                     }
                 }
             } catch (IOException ex) {
-                log.error("File for parse by path: " + pathCsvFile + " not found!"+ex.getMessage());
+                log.error("File for parse by path: " + pathCsvFile + " not found!" + ex.getMessage());
             }
         }
         return "Json file hasn't been saved";
@@ -55,27 +56,27 @@ public class ShellCommands {
     @ShellMethod(value = "Parse zip csv file to Jsone.", group = "Parsing zip csv")
     public String parseZip(String pathCsvFile, String pathOutputJsonFile) {
 
+
         try (FileInputStream fis = new FileInputStream(pathCsvFile);
              BufferedInputStream bis = new BufferedInputStream(fis);
              ZipInputStream zis = new ZipInputStream(bis)) {
 
+            ZipFile zipFile = new ZipFile(new File(pathCsvFile));
             ZipEntry ze;
 
 
             List<PaerseEntity> paerseEntities = new ArrayList<>();
             while ((ze = zis.getNextEntry()) != null) {
-                if(ze.getExtra() != null) {
-                    try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(ze.getExtra()), StandardCharsets.UTF_8))) {
-                        paerseEntities.addAll(parseService.parseCsvFile(csvReader));
-                    } catch (IOException ex) {
-                        log.error("File with path: " + pathCsvFile + " hasn't been parsed!");
-                        ex.printStackTrace();
-                    }
+                try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
+                    paerseEntities.addAll(parseService.parseCsvFile(csvReader));
+                } catch (Exception ex) {
+                    log.error("File with path: " + pathCsvFile + " hasn't been parsed!");
+                    ex.printStackTrace();
                 }
             }
 
             String json = null;
-            if(CollectionUtils.isNotEmpty(paerseEntities)) {
+            if (CollectionUtils.isNotEmpty(paerseEntities)) {
                 ObjectMapper mapper = new ObjectMapper();
                 json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
             }
