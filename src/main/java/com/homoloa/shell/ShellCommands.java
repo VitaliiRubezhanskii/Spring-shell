@@ -29,7 +29,7 @@ public class ShellCommands {
 
         File fileForParse = new File(pathCsvFile);
         if (fileForParse.exists()) {
-            try (CSVReader csvReader = new CSVReader(new FileReader(pathCsvFile))) {
+            try (BufferedReader csvReader = new BufferedReader(new FileReader(pathCsvFile))) {
 
                 ObjectMapper mapper = new ObjectMapper();
                 String json = mapper.writeValueAsString(new JsonWrapperDto(parseService.parseCsvFile(csvReader)));
@@ -43,7 +43,7 @@ public class ShellCommands {
                     }
                 }
             } catch (IOException ex) {
-                log.error("File for parse by path: " + pathCsvFile + " not found!");
+                log.error("File for parse by path: " + pathCsvFile + " not found!"+ex.getMessage());
             }
         }
         return "Json file hasn't been saved";
@@ -58,31 +58,32 @@ public class ShellCommands {
 
             ZipEntry ze;
 
-            try (CSVReader csvReader = new CSVReader(new FileReader(pathCsvFile))) {
-                List<PaerseEntity> paerseEntities = new ArrayList<>();
-                while ((ze = zis.getNextEntry()) != null) {
+
+            List<PaerseEntity> paerseEntities = new ArrayList<>();
+            while ((ze = zis.getNextEntry()) != null) {
+                try (BufferedReader csvReader = new BufferedReader(new FileReader(ze.getName()))) {
                     paerseEntities.addAll(parseService.parseCsvFile(csvReader));
+                } catch (IOException ex) {
+                    log.error("File for parse by path: " + ze.getName() + " not found!");
                 }
-
-                ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
-
-
-                if (json != null) {
-                    try (FileWriter fw = new FileWriter(pathOutputJsonFile);
-                         BufferedWriter bw = new BufferedWriter(fw)) {
-
-                        bw.write(json);
-                        return "Json file has been successfully saved";
-                    }
-                }
-            } catch (IOException ex) {
-                log.error("File for parse by path: " + pathCsvFile + " not found!");
             }
-        }catch (IOException ex) {
+
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
+
+
+            if (json != null) {
+                try (FileWriter fw = new FileWriter(pathOutputJsonFile);
+                     BufferedWriter bw = new BufferedWriter(fw)) {
+
+                    bw.write(json);
+                    return "Json file has been successfully saved";
+                }
+            }
+
+        } catch (IOException ex) {
             log.error(" Zip File for parse by path: " + pathCsvFile + " hasn't been handled");
         }
         return "Json file hasn't been saved";
     }
-
 }

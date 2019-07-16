@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,7 +32,7 @@ public class ParseServiceImpl implements ParseService{
     @Override
     public ResponseEntity<InputStreamResource> parseFile( MultipartFile file) {
 
-            try (CSVReader csvReader = new CSVReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+            try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
                 ObjectMapper mapper = new ObjectMapper();
                 String json =  mapper.writeValueAsString(new JsonWrapperDto( parseCsvFile(csvReader)));
@@ -46,13 +47,14 @@ public class ParseServiceImpl implements ParseService{
         return  ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
     }
 
-    public List<PaerseEntity> parseCsvFile(CSVReader csvReader) {
+    @Override
+    public List<PaerseEntity> parseCsvFile(BufferedReader csvReader) {
         Map<String, String> mapping = getStringStringMap();
 
         HeaderColumnNameTranslateMappingStrategy<PaerseEntity> strategy =
                 new HeaderColumnNameTranslateMappingStrategy<PaerseEntity>();
-//        strategy.setType(PaerseEntity.class);
-//        strategy.setColumnMapping(mapping);
+        strategy.setType(PaerseEntity.class);
+        strategy.setColumnMapping(mapping);
 
         CsvToBean csvToBean = new CsvToBeanBuilder<PaerseEntity>(csvReader)
                 .withType(PaerseEntity.class)
@@ -60,7 +62,7 @@ public class ParseServiceImpl implements ParseService{
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
 
-        return csvToBean.parse(strategy, csvReader);
+        return csvToBean.parse();
     }
 
     private HttpHeaders getHttpHeaders(String fileType, String fileName) {
