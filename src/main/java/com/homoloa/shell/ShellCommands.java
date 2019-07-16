@@ -23,6 +23,7 @@ public class ShellCommands {
     @Autowired
     private ParseService parseService;
 
+
     @ShellMethod(value = "Parse csv file to Jsone.", group = "Parsing csv")
     public String parse(String pathCsvFile, String pathOutputJsonFile) {
 
