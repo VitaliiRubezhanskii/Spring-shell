@@ -1,5 +1,6 @@
 package com.homoloa.shell;
 
+import com.homoloa.service.ParseServiceImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,13 +28,13 @@ public class ShellCommandsTest {
     @Before
     public void setUp() {
         ApplicationContext context =
-                new AnnotationConfigApplicationContext(ShellCommands.class);
+                new AnnotationConfigApplicationContext(ShellCommands.class, ParseServiceImpl.class);
         registrar.setApplicationContext(context);
         registrar.register(registry);
     }
 
     @Test
-    public void testParseCsv() {
+    public void testParse() {
         Map<String, MethodTarget> commands = registry.listCommands();
 
         MethodTarget methodTarget = commands.get("parse");
@@ -45,7 +46,44 @@ public class ShellCommandsTest {
                 ReflectionUtils.findMethod(ShellCommands.class, "parse", String.class,
                         String.class)));
         assertThat(methodTarget.getAvailability().isAvailable(), is(true));
-        assertEquals("Parsing........", ReflectionUtils.invokeMethod(methodTarget.getMethod(),
-                methodTarget.getBean(), "one", "two"));
+        assertEquals("Json file has been successfully saved", ReflectionUtils.invokeMethod(methodTarget.getMethod(),
+                methodTarget.getBean(), "src/test/resources/test-csv/test.csv", "src/test/resources/test-csv/test.json"));
+    }
+    @Test
+    public void testParseZip() {
+        Map<String, MethodTarget> commands = registry.listCommands();
+
+        MethodTarget methodTarget = commands.get("parse-zip");
+        assertThat(methodTarget, notNullValue());
+        Assertions.assertThat(methodTarget.getGroup()).isEqualTo(
+                "Parsing zip csv");
+        assertThat(methodTarget.getHelp(), is("Parse zip csv file to Jsone."));
+        assertThat(methodTarget.getMethod(), is(
+                ReflectionUtils.findMethod(ShellCommands.class, "parseZip", String.class,
+                        String.class)));
+        assertThat(methodTarget.getAvailability().isAvailable(), is(true));
+        assertEquals("Json file has been successfully saved", ReflectionUtils.invokeMethod(methodTarget.getMethod(),
+                methodTarget.getBean(), "src/test/resources/test-csv/test.zip", "src/test/resources/test-csv/test-zip.json"));
+    }
+
+    @Test
+    public void testParseWithWrongCsvFilePath() {
+        Map<String, MethodTarget> commands = registry.listCommands();
+
+        MethodTarget methodTarget = commands.get("parse");
+        assertThat(methodTarget, notNullValue());
+
+        assertEquals("Json file hasn't been saved", ReflectionUtils.invokeMethod(methodTarget.getMethod(),
+                methodTarget.getBean(), "Wrong Path", "src/test/resources/test-csv/test.json"));
+    }
+    @Test
+    public void testParseZipWithWrongCsvFilePath() {
+        Map<String, MethodTarget> commands = registry.listCommands();
+
+        MethodTarget methodTarget = commands.get("parse-zip");
+        assertThat(methodTarget, notNullValue());
+
+        assertEquals("Json file hasn't been saved", ReflectionUtils.invokeMethod(methodTarget.getMethod(),
+                methodTarget.getBean(), "Wrong Path", "src/test/resources/test-csv/test-zip.json"));
     }
 }

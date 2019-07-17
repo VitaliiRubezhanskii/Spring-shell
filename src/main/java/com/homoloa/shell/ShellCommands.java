@@ -21,8 +21,12 @@ import java.util.zip.ZipInputStream;
 @Slf4j
 public class ShellCommands {
 
+    private final ParseService parseService;
+
     @Autowired
-    private ParseService parseService;
+    public ShellCommands(ParseService parseService) {
+        this.parseService = parseService;
+    }
 
     @ShellMethod(value = "Parse csv file to Jsone.", group = "Parsing csv")
     public String parse(String pathCsvFile, String pathOutputJsonFile) {
@@ -63,7 +67,6 @@ public class ShellCommands {
                     paerseEntities.addAll(parseService.parseCsvFile(csvReader));
                 } catch (Exception ex) {
                     log.error("File with path: " + pathCsvFile + " hasn't been parsed!");
-                    ex.printStackTrace();
                 }
             }
             String json = null;
