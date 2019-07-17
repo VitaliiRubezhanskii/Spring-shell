@@ -33,15 +33,10 @@ public class ShellCommands {
         File fileForParse = new File(pathCsvFile);
         if (fileForParse.exists()) {
             try (BufferedReader csvReader = new BufferedReader(new FileReader(pathCsvFile))) {
-                ObjectMapper mapper = new ObjectMapper();
-                String json = mapper.writeValueAsString(new JsonWrapperDto(parseService.parseCsvFile(csvReader)));
-                if (json != null) {
-                    try (FileWriter fw = new FileWriter(pathOutputJsonFile);
-                         BufferedWriter bw = new BufferedWriter(fw)) {
-                        bw.write(json);
-                        return "Json file has been successfully saved";
-                    }
-                }
+                List<PaerseEntity> parseEntities = parseService.parseCsvFile(csvReader);
+
+                String json = parseService.transformToJson(parseEntities);
+                if (parseService.saveJson(pathOutputJsonFile, json)) return "Json file has been successfully saved";
             } catch (IOException ex) {
                 log.error("File for parse by path: " + pathCsvFile + " not found!" + ex.getMessage());
             }
@@ -69,21 +64,13 @@ public class ShellCommands {
                     log.error("File with path: " + pathCsvFile + " hasn't been parsed!");
                 }
             }
-            String json = null;
-            if (CollectionUtils.isNotEmpty(paerseEntities)) {
-                ObjectMapper mapper = new ObjectMapper();
-                json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
-            }
-            if (json != null) {
-                try (FileWriter fw = new FileWriter(pathOutputJsonFile);
-                     BufferedWriter bw = new BufferedWriter(fw)) {
-                    bw.write(json);
-                    return "Json file has been successfully saved";
-                }
-            }
+            String json = parseService.transformToJson(paerseEntities);
+            if (parseService.saveJson(pathOutputJsonFile, json)) return "Json file has been successfully saved";
         }catch (IOException ex) {
             log.error(" Zip File for parse by path: " + pathCsvFile + " hasn't been handled");
         }
         return "Json file hasn't been saved";
     }
+
+
 }

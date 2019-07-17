@@ -1,6 +1,6 @@
 package com.homoloa.shell;
 
-import com.homoloa.service.ParseServiceImpl;
+import com.homoloa.service.impl.ParseServiceImpl;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;

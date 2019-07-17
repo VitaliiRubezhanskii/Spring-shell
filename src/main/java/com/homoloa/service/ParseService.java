@@ -7,10 +7,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.util.List;
 
 public interface ParseService {
 
     ResponseEntity<InputStreamResource> parseFile(MultipartFile file);
+
     List<PaerseEntity> parseCsvFile(BufferedReader csvReader) throws JsonProcessingException;
+
+    String transformToJson(List<PaerseEntity> paerseEntities) throws IOException;
+
+    boolean saveJson(String pathOutputJsonFile, String json) throws IOException;
 }

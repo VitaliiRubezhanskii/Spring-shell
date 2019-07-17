@@ -1,22 +1,21 @@
-package com.homoloa.service;
+package com.homoloa.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homoloa.domain.PaerseEntity;
 import com.homoloa.dto.JsonWrapperDto;
+import com.homoloa.service.ParseService;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +23,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class ParseServiceImpl implements ParseService{
+public class ParseServiceImpl implements ParseService {
 
 
     @Override
@@ -32,14 +31,14 @@ public class ParseServiceImpl implements ParseService{
 
             try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
 
-                ObjectMapper mapper = new ObjectMapper();
-                String json =  mapper.writeValueAsString(new JsonWrapperDto( parseCsvFile(csvReader)));
+                List<PaerseEntity> parsedEntities = parseCsvFile(csvReader);
+                String json = transformToJson(parsedEntities);
 
                 HttpHeaders headers = this.getHttpHeaders("json", "parsed");
                 ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
                 return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
 
-        }catch(IOException ex){
+        }catch(Exception ex){
             log.error("File with name: " + file.getOriginalFilename() + " hasn't been parsed");
         }
         return  ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
@@ -61,6 +60,28 @@ public class ParseServiceImpl implements ParseService{
                 .build();
 
         return csvToBean.parse();
+    }
+
+    @Override
+    public String transformToJson(List<PaerseEntity> paerseEntities) throws IOException {
+        String json = null;
+        if (CollectionUtils.isNotEmpty(paerseEntities)) {
+            ObjectMapper mapper = new ObjectMapper();
+            json = mapper.writeValueAsString(new JsonWrapperDto(paerseEntities));
+        }
+        return json;
+    }
+
+    @Override
+    public boolean saveJson(String pathOutputJsonFile, String json) throws IOException {
+        if (json != null) {
+            try (FileWriter fw = new FileWriter(pathOutputJsonFile);
+                 BufferedWriter bw = new BufferedWriter(fw)) {
+                bw.write(json);
+                return true;
+            }
+        }
+        return false;
     }
 
     private HttpHeaders getHttpHeaders(String fileType, String fileName) {
