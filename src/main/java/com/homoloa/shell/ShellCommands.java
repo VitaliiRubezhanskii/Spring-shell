@@ -56,15 +56,15 @@ public class ShellCommands {
             ZipEntry ze;
 
 
-            List<PaerseEntity> paerseEntities = new ArrayList<>();
+            List<PaerseEntity> parseEntities = new ArrayList<>();
             while ((ze = zis.getNextEntry()) != null) {
                 try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
-                    paerseEntities.addAll(parseService.parseCsvFile(csvReader));
+                    parseEntities.addAll(parseService.parseCsvFile(csvReader));
                 } catch (Exception ex) {
                     log.error("File with path: " + pathCsvFile + " hasn't been parsed!");
                 }
             }
-            String json = parseService.transformToJson(paerseEntities);
+            String json = parseService.transformToJson(parseEntities);
             if (parseService.saveJson(pathOutputJsonFile, json)) return "Json file has been successfully saved";
         }catch (IOException ex) {
             log.error(" Zip File for parse by path: " + pathCsvFile + " hasn't been handled");

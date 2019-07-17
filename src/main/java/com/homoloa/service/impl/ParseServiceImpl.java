@@ -9,6 +9,7 @@ import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -17,31 +18,71 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 @Service
 @Slf4j
 public class ParseServiceImpl implements ParseService {
 
+    private final String tempUploadZipFilePath = "src/resources/upload/upload.zip";
 
     @Override
-    public ResponseEntity<InputStreamResource> parseFile( MultipartFile file) {
+    public ResponseEntity<InputStreamResource> parseFile(MultipartFile file) {
 
-            try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
-
-                List<PaerseEntity> parsedEntities = parseCsvFile(csvReader);
-                String json = transformToJson(parsedEntities);
-
-                HttpHeaders headers = this.getHttpHeaders("json", "parsed");
-                ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-                return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
-
-        }catch(Exception ex){
-            log.error("File with name: " + file.getOriginalFilename() + " hasn't been parsed");
+        List<PaerseEntity> parsedEntities = new ArrayList<>();
+        String json;
+        try {
+            if (file.getOriginalFilename().endsWith(".zip")) {
+                readDataFromZipFile(file.getInputStream(), parsedEntities);
+            } else if (file.getOriginalFilename().endsWith(".csv")) {
+                readDataFromCsvFile(file.getInputStream(), parsedEntities);
+            } else {
+                return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+            }
+            json = transformToJson(parsedEntities);
+        } catch (Exception ex) {
+            log.error("File with name: " + file.getName() + " hasn't been parsed!");
+            return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
         }
-        return  ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+
+        if(json != null) {
+            HttpHeaders headers = this.getHttpHeaders("json", "parsed");
+            ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
+            return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
+        }else{
+            return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+        }
+    }
+
+    private void readDataFromCsvFile(InputStream fin, List<PaerseEntity> entities) throws IOException {
+        try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(fin, StandardCharsets.UTF_8))) {
+            entities.addAll(parseCsvFile(csvReader));
+        }
+    }
+
+    @Override
+    public void readDataFromZipFile(InputStream fin, List<PaerseEntity> entities) throws IOException {
+        File zip = File.createTempFile(UUID.randomUUID().toString(), "temp");
+
+        try (FileOutputStream fos = new FileOutputStream(zip)) {
+            IOUtils.copy(fin, fos);
+        }
+
+        try (FileInputStream fis = new FileInputStream(zip);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+
+            ZipFile zipFile = new ZipFile(zip);
+            ZipEntry ze;
+
+            while ((ze = zis.getNextEntry()) != null) {
+                readDataFromCsvFile(zipFile.getInputStream(ze), entities);
+            }
+            zip.delete();
+        }
     }
 
     @Override
