@@ -1,7 +1,7 @@
 package com.homoloa.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.homoloa.domain.PaerseEntity;
+import com.homoloa.domain.ParseEntity;
 import com.homoloa.dto.JsonWrapperDto;
 import com.homoloa.service.ParseService;
 import com.opencsv.bean.CsvToBean;
@@ -32,7 +32,7 @@ public class ParseServiceImpl implements ParseService {
     @Override
     public ResponseEntity<InputStreamResource> parseFile(MultipartFile file) {
 
-        List<PaerseEntity> parsedEntities = new ArrayList<>();
+        List<ParseEntity> parsedEntities = new ArrayList<>();
         String json;
         try {
             if (file.getOriginalFilename().endsWith(".zip")) {
@@ -57,14 +57,14 @@ public class ParseServiceImpl implements ParseService {
         }
     }
 
-    private void readDataFromCsvFile(InputStream fin, List<PaerseEntity> entities) throws IOException {
+    private void readDataFromCsvFile(InputStream fin, List<ParseEntity> entities) throws IOException {
         try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(fin, StandardCharsets.UTF_8))) {
             entities.addAll(parseCsvFile(csvReader));
         }
     }
 
     @Override
-    public void readDataFromZipFile(InputStream fin, List<PaerseEntity> entities) throws IOException {
+    public void readDataFromZipFile(InputStream fin, List<ParseEntity> entities) throws IOException {
         File zip = File.createTempFile(UUID.randomUUID().toString(), "temp");
 
         try (FileOutputStream fos = new FileOutputStream(zip)) {
@@ -86,16 +86,16 @@ public class ParseServiceImpl implements ParseService {
     }
 
     @Override
-    public List<PaerseEntity> parseCsvFile(BufferedReader csvReader) {
+    public List<ParseEntity> parseCsvFile(BufferedReader csvReader) {
         Map<String, String> mapping = getStringStringMap();
 
-        HeaderColumnNameTranslateMappingStrategy<PaerseEntity> strategy =
-                new HeaderColumnNameTranslateMappingStrategy<PaerseEntity>();
-        strategy.setType(PaerseEntity.class);
+        HeaderColumnNameTranslateMappingStrategy<ParseEntity> strategy =
+                new HeaderColumnNameTranslateMappingStrategy<ParseEntity>();
+        strategy.setType(ParseEntity.class);
         strategy.setColumnMapping(mapping);
 
-        CsvToBean csvToBean = new CsvToBeanBuilder<PaerseEntity>(csvReader)
-                .withType(PaerseEntity.class)
+        CsvToBean csvToBean = new CsvToBeanBuilder<ParseEntity>(csvReader)
+                .withType(ParseEntity.class)
                 .withMappingStrategy(strategy)
                 .withIgnoreLeadingWhiteSpace(true)
                 .build();
@@ -104,7 +104,7 @@ public class ParseServiceImpl implements ParseService {
     }
 
     @Override
-    public String transformToJson(List<PaerseEntity> paerseEntities) throws IOException {
+    public String transformToJson(List<ParseEntity> paerseEntities) throws IOException {
         String json = null;
         if (CollectionUtils.isNotEmpty(paerseEntities)) {
             ObjectMapper mapper = new ObjectMapper();

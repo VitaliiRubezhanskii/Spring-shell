@@ -1,6 +1,6 @@
 package com.homoloa.dto;
 
-import com.homoloa.domain.PaerseEntity;
+import com.homoloa.domain.ParseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,5 +14,5 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JsonWrapperDto {
-    private List<PaerseEntity> data = new ArrayList<>();
+    private List<ParseEntity> data = new ArrayList<>();
 }

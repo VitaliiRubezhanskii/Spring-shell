@@ -1,11 +1,8 @@
 package com.homoloa.shell;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.homoloa.domain.PaerseEntity;
-import com.homoloa.dto.JsonWrapperDto;
+import com.homoloa.domain.ParseEntity;
 import com.homoloa.service.ParseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
@@ -33,7 +30,7 @@ public class ShellCommands {
         File fileForParse = new File(pathCsvFile);
         if (fileForParse.exists()) {
             try (BufferedReader csvReader = new BufferedReader(new FileReader(pathCsvFile))) {
-                List<PaerseEntity> parseEntities = parseService.parseCsvFile(csvReader);
+                List<ParseEntity> parseEntities = parseService.parseCsvFile(csvReader);
 
                 String json = parseService.transformToJson(parseEntities);
                 if (parseService.saveJson(pathOutputJsonFile, json)) return "Json file has been successfully saved";
@@ -56,7 +53,7 @@ public class ShellCommands {
             ZipEntry ze;
 
 
-            List<PaerseEntity> parseEntities = new ArrayList<>();
+            List<ParseEntity> parseEntities = new ArrayList<>();
             while ((ze = zis.getNextEntry()) != null) {
                 try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
                     parseEntities.addAll(parseService.parseCsvFile(csvReader));

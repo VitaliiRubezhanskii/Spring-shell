@@ -1,7 +1,7 @@
 package com.homoloa.service.impl;
 
 
-import com.homoloa.domain.PaerseEntity;
+import com.homoloa.domain.ParseEntity;
 import com.homoloa.service.ParseService;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,8 +19,8 @@ public class ParseServiceImplTest {
     private ParseService parseService;
     private final String pathTestCsvFile = "src/test/resources/test-csv/test.csv";
     private final String pathTestJson = "src/test/resources/test-csv/test.json";
-    private PaerseEntity testEntity1;
-    private PaerseEntity testEntity2;
+    private ParseEntity testEntity1;
+    private ParseEntity testEntity2;
 
     @Before
     public void setUp() {
@@ -33,7 +33,7 @@ public class ParseServiceImplTest {
     public void parseCsvFile() throws IOException {
 
         try (BufferedReader csvReader = new BufferedReader(new FileReader(pathTestCsvFile))) {
-            List<PaerseEntity> parseEntities = parseService.parseCsvFile(csvReader);
+            List<ParseEntity> parseEntities = parseService.parseCsvFile(csvReader);
 
             assertNotNull(parseEntities);
             assertEquals(5, parseEntities.size());
@@ -50,7 +50,7 @@ public class ParseServiceImplTest {
     @Test
     public void transformToJson() throws IOException{
 
-        List<PaerseEntity> entities = Arrays.asList(testEntity1, testEntity2);
+        List<ParseEntity> entities = Arrays.asList(testEntity1, testEntity2);
         String json = parseService.transformToJson(entities);
 
         assertNotNull(json);
@@ -66,15 +66,15 @@ public class ParseServiceImplTest {
     @Test
     public void saveJson() throws IOException{
 
-        List<PaerseEntity> entities = Arrays.asList(testEntity1, testEntity2);
+        List<ParseEntity> entities = Arrays.asList(testEntity1, testEntity2);
         String json = parseService.transformToJson(entities);
         boolean isSaved = parseService.saveJson(pathTestJson, json);
 
         assertTrue(isSaved);
     }
 
-    private PaerseEntity setEntity1() {
-        PaerseEntity entity = new PaerseEntity();
+    private ParseEntity setEntity1() {
+        ParseEntity entity = new ParseEntity();
         entity.setCountryAbbreviation("601");
         entity.setCompanyCode("41339");
         entity.setCompanyName("ACETO");
@@ -84,8 +84,8 @@ public class ParseServiceImplTest {
         return entity;
     }
 
-    private PaerseEntity setEntity2() {
-        PaerseEntity entity = new PaerseEntity();
+    private ParseEntity setEntity2() {
+        ParseEntity entity = new ParseEntity();
         entity.setCountryAbbreviation("601");
         entity.setCompanyCode("40171");
         entity.setCompanyName("PBI-GORDON");
