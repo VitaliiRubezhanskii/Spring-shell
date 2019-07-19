@@ -3,16 +3,17 @@ package com.homoloa.service.impl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homoloa.domain.ParseEntity;
 import com.homoloa.dto.JsonWrapperDto;
+import com.homoloa.exception.FileParseException;
 import com.homoloa.service.ParseService;
 import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,13 +25,10 @@ import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
 @Service
-@Slf4j
 public class ParseServiceImpl implements ParseService {
-
-    private final String tempUploadZipFilePath = "src/resources/upload/upload.zip";
-
+    private static Logger log = LoggerFactory.getLogger(ParseServiceImpl.class);
     @Override
-    public ResponseEntity<InputStreamResource> parseFile(MultipartFile file) {
+    public InputStreamResource parseFile(MultipartFile file) throws FileParseException {
 
         List<ParseEntity> parsedEntities = new ArrayList<>();
         String json;
@@ -40,20 +38,19 @@ public class ParseServiceImpl implements ParseService {
             } else if (file.getOriginalFilename().endsWith(".csv")) {
                 readDataFromCsvFile(file.getInputStream(), parsedEntities);
             } else {
-                return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+                throw new FileParseException("Sorry, couldn't parse that file");
             }
             json = transformToJson(parsedEntities);
         } catch (Exception ex) {
             log.error("File with name: " + file.getName() + " hasn't been parsed!");
-            return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+            throw new FileParseException("Sorry, couldn't parse that file");
         }
 
         if(json != null) {
-            HttpHeaders headers = this.getHttpHeaders("json", "parsed");
             ByteArrayInputStream in = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
-            return ResponseEntity.ok().headers(headers).body(new InputStreamResource(in));
+            return new InputStreamResource(in);
         }else{
-            return ResponseEntity.badRequest().header("message", "Sorry, couldn't parse that file").build();
+            throw new FileParseException("Sorry, couldn't parse that file");
         }
     }
 
@@ -125,14 +122,14 @@ public class ParseServiceImpl implements ParseService {
         return false;
     }
 
-    private HttpHeaders getHttpHeaders(String fileType, String fileName) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Encoding", "UTF-8");
-        headers.add("Content-Type", "application/json");
-        headers.add("name", fileName + "." + fileType);
-        headers.add("Content-Disposition", "attachment; filename= " + fileName + "." + fileType);
-        return headers;
-    }
+//    private HttpHeaders getHttpHeaders(String fileType, String fileName) {
+//        HttpHeaders headers = new HttpHeaders();
+//        headers.add("Content-Encoding", "UTF-8");
+//        headers.add("Content-Type", "application/json");
+//        headers.add("name", fileName + "." + fileType);
+//        headers.add("Content-Disposition", "attachment; filename= " + fileName + "." + fileType);
+//        return headers;
+//    }
 
     private Map<String, String> getStringStringMap() {
         Map<String, String> mapping = new
@@ -158,5 +155,35 @@ public class ParseServiceImpl implements ParseService {
         mapping.put("PROD_NAME_EN", "productNameEnglish");
         mapping.put("Reg number", "registrationNumber");
         return mapping;
+    }
+
+    @Override
+    public String parseForLambda(String testZipFilePath){
+
+        ParseService parseService = new ParseServiceImpl();
+        File file = new File(this.getClass().getClassLoader().getResource(testZipFilePath).getFile());
+
+        try (FileInputStream fis = new FileInputStream(file);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+
+            ZipFile zipFile = new ZipFile(file);
+            ZipEntry ze;
+
+
+            List<ParseEntity> parseEntities = new ArrayList<>();
+            while ((ze = zis.getNextEntry()) != null) {
+                try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
+                    parseEntities.addAll(parseService.parseCsvFile(csvReader));
+                } catch (Exception ex) {
+                    log.error("File with path: " + testZipFilePath + " hasn't been parsed!");
+                }
+            }
+            return parseService.transformToJson(parseEntities);
+
+        }catch (IOException ex) {
+            log.error(" Zip File for parse by path: " + testZipFilePath + " hasn't been handled");
+        }
+        return " Zip File for parse by path: " + testZipFilePath + " hasn't been handled";
     }
 }

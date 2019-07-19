@@ -7,15 +7,25 @@ import com.amazonaws.serverless.proxy.spring.SpringBootLambdaContainerHandler;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.homoloa.Application;
+import com.homoloa.domain.ParseEntity;
+import com.homoloa.service.ParseService;
+import com.homoloa.service.impl.ParseServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 public class StreamLambdaHandler implements RequestStreamHandler {
         private static Logger logger = LoggerFactory.getLogger(StreamLambdaHandler.class);
+
+        private final String testZipFilePath = "src/test/resources/test-csv/test.zip";
 
         public static final SpringBootLambdaContainerHandler<AwsProxyRequest, AwsProxyResponse> handler;
 
