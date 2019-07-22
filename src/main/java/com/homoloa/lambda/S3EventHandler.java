@@ -74,7 +74,7 @@ public class S3EventHandler implements RequestHandler<S3Event, String> {
 
     private void uploadJsonToS3(String bucketName, String key, AmazonS3 client, String json) {
         int lastIndexOfDot = key.lastIndexOf('.');
-        String newKey = key.substring(0, lastIndexOfDot) + "_thumb"
+        String newKey = key.substring(0, lastIndexOfDot) + "test"
                 + key.substring(lastIndexOfDot+1);
 
         ObjectMetadata metadata = new ObjectMetadata();
