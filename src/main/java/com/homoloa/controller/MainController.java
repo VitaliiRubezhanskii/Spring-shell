@@ -40,7 +40,7 @@ public class MainController {
     @ResponseBody
     public String processing(){
 
-            return parseService.parseForLambda(pathTestCsvFile);
+            return parseService.testParse();
 //        return "Hello World";
     }
 

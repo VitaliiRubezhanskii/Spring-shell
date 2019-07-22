@@ -1,5 +1,6 @@
 package com.homoloa.service.impl;
 
+import com.amazonaws.util.IOUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homoloa.domain.ParseEntity;
 import com.homoloa.dto.JsonWrapperDto;
@@ -9,7 +10,6 @@ import com.opencsv.bean.CsvToBean;
 import com.opencsv.bean.CsvToBeanBuilder;
 import com.opencsv.bean.HeaderColumnNameTranslateMappingStrategy;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +19,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.OpenOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -27,6 +31,9 @@ import java.util.zip.ZipInputStream;
 @Service
 public class ParseServiceImpl implements ParseService {
     private static Logger log = LoggerFactory.getLogger(ParseServiceImpl.class);
+
+    private final String pathTestCsvFile = "test.zip";
+
     @Override
     public InputStreamResource parseFile(MultipartFile file) throws FileParseException {
 
@@ -158,10 +165,13 @@ public class ParseServiceImpl implements ParseService {
     }
 
     @Override
-    public String parseForLambda(String testZipFilePath){
+    public String parseForLambda(byte[] bytes)throws IOException {
 
         ParseService parseService = new ParseServiceImpl();
-        File file = new File(this.getClass().getClassLoader().getResource(testZipFilePath).getFile());
+        File file = new File(this.getClass().getClassLoader().getResource("temp.csv").getFile());
+        try (OutputStream os = new FileOutputStream(file)){
+            os.write(bytes);
+        }
 
         try (FileInputStream fis = new FileInputStream(file);
              BufferedInputStream bis = new BufferedInputStream(fis);
@@ -176,14 +186,38 @@ public class ParseServiceImpl implements ParseService {
                 try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
                     parseEntities.addAll(parseService.parseCsvFile(csvReader));
                 } catch (Exception ex) {
-                    log.error("File with path: " + testZipFilePath + " hasn't been parsed!");
+                    log.error("File with path: " + ze.getName() + " hasn't been parsed!");
+                }
+            }
+            return parseService.transformToJson(parseEntities);
+        }
+    }
+
+    @Override
+    public String testParse() {
+        ParseService parseService = new ParseServiceImpl();
+        File file = new File(this.getClass().getClassLoader().getResource(pathTestCsvFile).getFile());
+
+        try (FileInputStream fis = new FileInputStream(file);
+             BufferedInputStream bis = new BufferedInputStream(fis);
+             ZipInputStream zis = new ZipInputStream(bis)) {
+
+            ZipFile zipFile = new ZipFile(file);
+            ZipEntry ze;
+
+
+            List<ParseEntity> parseEntities = new ArrayList<>();
+            while ((ze = zis.getNextEntry()) != null) {
+                try (BufferedReader csvReader = new BufferedReader(new InputStreamReader(zipFile.getInputStream(ze), StandardCharsets.UTF_8))) {
+                    parseEntities.addAll(parseService.parseCsvFile(csvReader));
+                } catch (Exception ex) {
+                    log.error("File with path: " + pathTestCsvFile + " hasn't been parsed!");
                 }
             }
             return parseService.transformToJson(parseEntities);
 
         }catch (IOException ex) {
-            log.error(" Zip File for parse by path: " + testZipFilePath + " hasn't been handled");
+            log.error(" Zip File for parse by path: " + pathTestCsvFile + " hasn't been handled");
         }
-        return " Zip File for parse by path: " + testZipFilePath + " hasn't been handled";
-    }
+        return " Zip File for parse by path: " + pathTestCsvFile + " hasn't been handled";    }
 }

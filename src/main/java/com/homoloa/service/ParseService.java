@@ -15,7 +15,9 @@ public interface ParseService {
 
     InputStreamResource parseFile(MultipartFile file) throws FileParseException;
 
-    String parseForLambda(String testZipFilePath);
+    String parseForLambda(byte[] bytes) throws IOException;
+
+    String testParse();
 
     void readDataFromZipFile(InputStream fin, List<ParseEntity> entities) throws IOException;
 
